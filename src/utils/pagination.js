@@ -14,11 +14,3 @@ export const paginationFunction = ({ page = 1, size = 2 }) => {
 }
 
 
-// 1,2,3,4,5
-
-
-// 0 => 1
-// -1 => 1
-
-
-// 6

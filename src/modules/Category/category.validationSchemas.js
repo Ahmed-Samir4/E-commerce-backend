@@ -1,8 +1,8 @@
 import Joi from "joi";
 
 export const addCategorySchema ={
-    formData: Joi.object({
-        name: Joi.string().required(),
+    body: Joi.object({
+        name: Joi.string().length(3).required(),
     })
 }
 

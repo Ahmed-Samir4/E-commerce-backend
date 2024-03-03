@@ -43,7 +43,7 @@ export const multerMiddleLocal = ({
         if (extensions.includes(file.mimetype.split('/')[1])) {
             return cb(null, true)
         }
-        cb(new Error('Image format is not allowed!'), false)
+        cb(new Error('Format is not allowed!'), false)
     }
 
 

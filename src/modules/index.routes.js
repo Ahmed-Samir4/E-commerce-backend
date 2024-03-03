@@ -7,7 +7,7 @@ import subCategoryRouter from './Sub-categories/subCategory.routes.js'
 import brandRouter from  './Brands/brand.routes.js'
 import productRouter from  './Product/product.routes.js'
 import cartRouter from  './Cart/cart.routes.js'
-
+import couponRouter from  './Coupon/coupon.routes.js'
 
 
 
@@ -18,7 +18,8 @@ export {
     subCategoryRouter,
     brandRouter,
     productRouter,
-    cartRouter
+    cartRouter,
+    couponRouter
 }
 
 /**
