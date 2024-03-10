@@ -5,8 +5,8 @@ import { DateTime} from 'luxon'
 
 
 export function cronToChangeExpiredCoupons(){
-    scheduleJob('*/30 * * * * *', async () => {
-        console.log('cronToChangeExpiredCoupons()  is running every 5 seconds');
+    scheduleJob('* */4 * * * *', async () => {
+        console.log('cronToChangeExpiredCoupons()  is running every 4 minutes');
         const coupons = await Coupon.find({couponStatus:'valid'})
         // console.log(coupons);
         for (const coupon of coupons) {

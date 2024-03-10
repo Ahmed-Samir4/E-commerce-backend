@@ -47,18 +47,3 @@ const productSchema = new Schema({
 
 export default mongoose.models.Product || model('Product', productSchema)
 
-
-// {
-//     colors: ['red', 'green', 'blue'],
-//         hamada: [128, 265, 64],
-// }
-
-// {
-//     colors: ['yellow', 'white'],
-//         sizes: ['s', 'm', 'l', 'xl']
-// }
-// {
-//     colors: ['red', 'green', 'blue']
-// }
-
-// MDN  to study Map and Objects

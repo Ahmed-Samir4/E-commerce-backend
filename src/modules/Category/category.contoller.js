@@ -5,10 +5,16 @@ import subCategory from '../../../DB/Models/sub-category.model.js'
 import Brand from '../../../DB/Models/brand.model.js'
 import cloudinaryConnection from '../../utils/cloudinary.js'
 import generateUniqueString from '../../utils/generate-Unique-String.js'
+import Product from '../../../DB/Models/product.model.js'
+import e from 'express'
 // import mongoose from 'mongoose'
 
-// const Brand = mongoose.models.Brand
-//============================== add category ==============================//
+
+/** 
+ * @name addCategory
+ * @param name
+ * @description add new category after checking if the category name is already exist and upload the image to cloudinary
+*/
 export const addCategory = async (req, res, next) => {
     // 1- destructuring the request body
     const { name } = req.body
@@ -54,7 +60,12 @@ export const addCategory = async (req, res, next) => {
 }
 
 
-//================================ update category ================================//
+/**
+ * @name updateCategory
+ * @param name
+ * @param oldPublicId
+ * @description update category name and image if exists by using oldPublicId to overwrite the old image in cloudinary
+ *  */
 export const updateCategory = async (req, res, next) => {
     // 1- destructuring the request body
     const { name, oldPublicId } = req.body
@@ -109,7 +120,10 @@ export const updateCategory = async (req, res, next) => {
 }
 
 
-//============================== get all categories ==============================//
+/**
+ * @name getAllCategories
+ * @description get all categories and the related subcategories, brands, products 
+ */
 export const getAllCategories = async (req, res, next) => {
     // nested populate
     const categories = await Category.find().populate(
@@ -117,7 +131,10 @@ export const getAllCategories = async (req, res, next) => {
             {
                 path: 'subcategories',
                 populate: [{
-                    path: 'Brands'
+                    path: 'Brands',
+                    populate: [{
+                        path: 'Products'
+                    }]
                 }]
             }
         ]
@@ -126,7 +143,11 @@ export const getAllCategories = async (req, res, next) => {
     res.status(200).json({ success: true, message: 'Categories fetched successfully', data: categories })
 }
 
-//====================== delete category ======================//
+/**
+ * @name deleteCategory
+ * @param categoryId
+ * @description delete category and the related subcategories, brands, products and the category folder from cloudinary
+ */
 export const deleteCategory = async (req, res, next) => {
     const { categoryId } = req.params
 
@@ -148,10 +169,48 @@ export const deleteCategory = async (req, res, next) => {
         console.log('There is no related brands');
     }
 
+    // 4- delete the related products
+    const products = await Product.deleteMany({ categoryId })
+    if (products.deletedCount <= 0) {
+        console.log(products.deletedCount);
+        console.log('There is no related products');
+    }
 
-    // 4- delete the category folder from cloudinary
+    // 5- delete the category folder from cloudinary
     await cloudinaryConnection().api.delete_resources_by_prefix(`${process.env.MAIN_FOLDER}/Categories/${category.folderId}`)
     await cloudinaryConnection().api.delete_folder(`${process.env.MAIN_FOLDER}/Categories/${category.folderId}`)
 
     res.status(200).json({ success: true, message: 'Category deleted successfully' })
+}
+
+/**
+ * @name getCategory
+ * @param categoryId
+ * @description get category by using categoryId
+ */
+export const getCategory = async (req, res, next) => {
+    const { categoryId } = req.params
+    const category = await Category.findById(categoryId).populate([{
+        path: 'subcategories',
+        populate: [{
+            path: 'Brands',
+            populate: [{
+                path: 'Products'
+            }]
+        }]
+    }])
+    if (!category) return next({ cause: 404, message: 'Category not found' })
+    res.status(200).json({ success: true, message: 'Category fetched successfully', data: category })
+}
+
+/**
+ * @name getSubCategories
+ * @param categoryId
+ * @description get all subcategories for specific category 
+ */
+export const getSubCategories = async (req, res, next) => {
+    const { categoryId } = req.params
+    const subCategories = await Category.findById(categoryId).populate('subcategories')
+    if (!subCategories) return next({ cause: 404, message: 'Subcategories not found' })
+    res.status(200).json({ success: true, message: 'Subcategories fetched successfully', data: subCategories })
 }

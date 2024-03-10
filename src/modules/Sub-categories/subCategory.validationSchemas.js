@@ -24,3 +24,9 @@ export const deleteSubCategorySchema ={
         subCategoryId : Joi.string().length(24).hex().required()
     })
 }
+
+export const getSubCategorySchema ={
+    params : Joi.object({
+        subCategoryId : Joi.string().length(24).hex().required()
+    })
+}

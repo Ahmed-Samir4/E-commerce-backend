@@ -2,6 +2,7 @@
 import mongoose, { Schema, model } from "mongoose";
 import { systemRoles } from "../../src/utils/system-roles.js";
 
+
 const userSchema = new Schema({
     username: {
         type: String,
@@ -33,7 +34,7 @@ const userSchema = new Schema({
     }],
     role: {
         type: String,
-        enum: [systemRoles.USER, systemRoles.ADMIN, systemRoles.SUPER_ADMIN],
+        enum: Object.values(systemRoles),
         default: systemRoles.USER
     },
     isEmailVerified: {
@@ -48,6 +49,13 @@ const userSchema = new Schema({
     isLoggedIn: {
         type: Boolean,
         default: false
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    forgetCode: {
+        type: String
     }
 }, { timestamps: true })
 

@@ -2,7 +2,7 @@
 import Coupon from '../../../DB/Models/coupon.model.js'
 import CouponUsers from '../../../DB/Models/coupon-users.model.js'
 import User from '../../../DB/Models/user.model.js'
-import { applyCouponValidation } from '../../utils/coupon.validation.js'
+import { applyCouponValidation } from '../../utils/coupon-validation.js'
 
 //============================== Add Coupon API ==============================//
 /**
@@ -87,3 +87,5 @@ export const validteCouponApi = async (req, res, next) => {
     res.json({ message: 'coupon is valid', coupon: isCouponValid })
 
 }
+
+

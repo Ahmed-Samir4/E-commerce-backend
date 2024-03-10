@@ -21,8 +21,24 @@ export const deleteUserSchema ={
     })
 }
 
+export const softDeleteUserSchema ={
+    params : Joi.object({
+        userId : Joi.string().length(24).hex().required()
+    })
+}
+
 export const getUserDataSchema ={
     params : Joi.object({
         userId : Joi.string().length(24).hex().required()
+    })
+}
+
+export const updatePasswordSchema ={
+    params : Joi.object({
+        userId : Joi.string().length(24).hex().required()
+    }),
+    body: Joi.object({
+        oldPassword: Joi.string().required(),
+        newPassword: Joi.string().required()
     })
 }
