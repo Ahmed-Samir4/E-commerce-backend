@@ -1,31 +1,37 @@
 import { Router } from 'express'
 import express from 'express'
-const router = Router()
+import expressAsyncHandler from 'express-async-handler'
 
 import * as orderController from './order.controller.js'
 import { auth } from '../../middlewares/auth.middleware.js'
-import { systemRoles } from '../../utils/system-roles.js'
-import expressAsyncHandler from 'express-async-handler'
+import { endPointsRoles } from './order.endpoints.js'
+import { validationMiddleware } from '../../middlewares/validation.middleware.js'
+import { cancelOrderSchema, convertFromCartToOrderSchema, createOrderSchema, deliverOrderSchema, payWithStripeSchema, refundOrderSchema } from './order.validationSchemas.js'
 
+const router = Router()
 
 
 router.post('/',
-    auth([systemRoles.USER]),
+    auth(endPointsRoles.CREATE_ORDER),
+    validationMiddleware(createOrderSchema),
     expressAsyncHandler(orderController.createOrder))
 
 
 router.post('/cartToOrder',
-    auth([systemRoles.USER]),
+    auth(endPointsRoles.CONVERT_FROM_CART_TO_ORDER),
+    validationMiddleware(convertFromCartToOrderSchema),
     expressAsyncHandler(orderController.convertFromCartToOrder))
 
 
 router.put('/:orderId',
-    auth([systemRoles.DELIVER]),
+    auth(endPointsRoles.DELIVER_ORDER),
+    validationMiddleware(deliverOrderSchema),
     expressAsyncHandler(orderController.deliverOrder))
 
 router.post(
     '/stripePay/:orderId',
-    auth([systemRoles.USER]),
+    auth(endPointsRoles.PAY_WITH_STRIPE),
+    validationMiddleware(payWithStripeSchema),
     expressAsyncHandler(orderController.payWithStripe))
 
 router.post('/webhook',
@@ -34,8 +40,13 @@ router.post('/webhook',
 
 
 router.post('/refund/:orderId',
-    
+    auth(endPointsRoles.REFUND_ORDER),
+    validationMiddleware(refundOrderSchema),
     expressAsyncHandler(orderController.refundOrder))
 
+router.put('/cancel/:orderId',
+    auth(endPointsRoles.CANCEL_ORDER),
+    validationMiddleware(cancelOrderSchema),
+    expressAsyncHandler(orderController.cancelOrder))
 
 export default router

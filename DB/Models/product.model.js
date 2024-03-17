@@ -42,8 +42,16 @@ const productSchema = new Schema({
     subCategoryId: { type: Schema.Types.ObjectId, ref: 'SubCategory', required: true },
     brandId: { type: Schema.Types.ObjectId, ref: 'Brand', required: true },
 
-}, { timestamps: true });
+}, { timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
 
+productSchema.virtual('reviews', {
+    ref: 'Review',
+    localField: '_id',
+    foreignField: 'productId'
+})
 
 export default mongoose.models.Product || model('Product', productSchema)
 

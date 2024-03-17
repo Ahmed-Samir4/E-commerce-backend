@@ -6,7 +6,7 @@ import { multerMiddleHost } from '../../middlewares/multer.js'
 import { allowedExtensions } from '../../utils/allowed-extensions.js'
 import { endPointsRoles } from './brand.endpoints.js'
 import { auth } from '../../middlewares/auth.middleware.js'
-import { addBrandSchema, deleteBrandSchema, updateBrandSchema } from './brand.validationSchemas.js'
+import { addBrandSchema, deleteBrandSchema, updateBrandSchema, getAllBrandsSchema } from './brand.validationSchemas.js'
 import { validationMiddleware } from '../../middlewares/validation.middleware.js'
 
 const router = Router()
@@ -32,5 +32,10 @@ router.delete('/:brandId',
     validationMiddleware(deleteBrandSchema),
     expressAsyncHandler(brandController.deleteBrand))
 
-router.get('/', expressAsyncHandler(brandController.getAllBrands))
+router.get('/',
+    // validationMiddleware(getAllBrandsSchema),
+    expressAsyncHandler(brandController.getAllBrands))
+
+
+
 export default router

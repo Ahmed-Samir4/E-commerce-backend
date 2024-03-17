@@ -9,15 +9,13 @@ import { APIFeatures } from "../../utils/api-features.js"
 
 
 /**
- * 
+ * @name addProduct
  * @param {*} req body: {title, desc, basePrice, discount, stock, specs}  authUser
  * @param {*} req query: {categoryId, subCategoryId, brandId}
  * @param {*} req authUser :{_id}
  * @returns the created product data with status 201 and success message
  * @description add a product to the database
  */
-
-
 //================================= Add product API =================================//
 export const addProduct = async (req, res, next) => {
     // data from the request body
@@ -78,14 +76,13 @@ export const addProduct = async (req, res, next) => {
 }
 
 /**
- * 
+ * @name updateProduct
  * @param {*} req body: {title, desc, basePrice, discount, stock, specs} 
  * @param {*} req params : {productId}
  * @param {*} req authUser :{_id}
  * @returns the updated product data with status 200 and success message
  * @description update a product in the database
  */
-
 //================================================= Update product API ============================================//
 export const updateProduct = async (req, res, next) => {
     // data from the request body
@@ -152,16 +149,23 @@ export const updateProduct = async (req, res, next) => {
 }
 
 
-//===================================== get all products API ===================================//
+/**
+ * @name getAllProducts
+ * @param {*} req query: {page, size, sort, ...search}
+ * @returns all products with status 200 and success message
+ * @description get all products from the database
+ */
 export const getAllProducts = async (req, res, next) => {
     const { page, size, sort, ...search } = req.query
     const features = new APIFeatures(req.query, Product.find())
         // .sort(sort)
         // .pagination({ page, size })
         // .search(search)
-        .filters(search)
+        // .filters(search)
 
     // console.log(features.mongooseQuery);
-    const products = await features.mongooseQuery
+    const products = await features.mongooseQuery.populate([{
+        path:'reviews',
+    }])
     res.status(200).json({ success: true, data: products })
 }

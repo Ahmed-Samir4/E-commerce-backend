@@ -4,9 +4,17 @@ import Brand from '../../../DB/Models/brand.model.js'
 import subCategory from '../../../DB/Models/sub-category.model.js'
 import cloudinaryConnection from '../../utils/cloudinary.js'
 import generateUniqueString from '../../utils/generate-Unique-String.js'
+import Product from '../../../DB/Models/product.model.js'
+import { APIFeatures } from '../../utils/api-features.js'
 
 
-//======================= add brand =======================//
+/**
+ * @name addBrand
+ * @body {name} - required
+ * @param {categoryId} - required
+ * @param {subCategoryId} - required
+ * @description add new brand to the subCategory after checking if the subCategory is exist and the brand name is not duplicated and upload the image to cloudinary
+ */
 export const addBrand = async (req, res, next) => {
     // 1- desturcture the required data from teh request object
     const { name } = req.body
@@ -55,6 +63,13 @@ export const addBrand = async (req, res, next) => {
 
 }
 
+/**
+ * @name updateBrand
+ * @body {name} - optional
+ * @body {oldPublicId} - optional
+ * @param {brandId} - required
+ * @description update the brand after checking if the brand is exist and the new name is not duplicated after checking the owner of the brand and upload the new image to cloudinary by using the oldPublicId to overwrite the old image
+ */
 export const updateBrand = async (req, res, next) => {
     // 1- destructuring the request body
     const { name, oldPublicId } = req.body
@@ -113,30 +128,50 @@ export const updateBrand = async (req, res, next) => {
 
 }
 
+/**
+ * @name deleteBrand
+ * @param {brandId} - required
+ * @description delete the brand after checking if the brand is exist and the owner of the brand is the same as the user and delete the related products and the brand folder from cloudinary
+ */
 export const deleteBrand = async (req, res, next) => {
     // 1- destructuring the request params
     const { brandId } = req.params
     // 2- destructuring _id from the request authUser
     const { _id } = req.authUser
     // 3- check if the brand is exist bu using brandId
-    const brand = await Brand.findByIdAndDelete(brandId).populate('categoryId', 'folderId').populate('subCategoryId', 'folderId')
-    console.log(brand);
+    const brand = await Brand.findById(brandId).populate('categoryId', 'folderId').populate('subCategoryId', 'folderId')
     if (!brand) return next({ cause: 404, message: 'Brand not found' })
-    // 4- check if the owner of the brand is the same as the user 
+    // 4- check if the owner of the brand is the same as the user
     if (brand.addedBy.toString() !== _id.toString()) {
         return next({ cause: 403, message: 'You are not the owner of this brand' })
     }
-    // 5- delete the brand folder from cloudinary
+    // 5- delete the brand from the database
+    await Brand.findByIdAndDelete(brandId)
+    // 6- delete related products
+    const products = await Product.deleteMany({ brandId })
+    if (products.deletedCount <= 0) {
+        console.log(products.deletedCount);
+        console.log('There is no related products');
+    }
+    // 7- delete the brand folder from cloudinary
     await cloudinaryConnection().api.delete_resources_by_prefix(`${process.env.MAIN_FOLDER}/Categories/${brand.categoryId.folderId}/SubCategories/${brand.subCategoryId.folderId}/Brands/${brand.folderId}`)
     await cloudinaryConnection().api.delete_folder(`${process.env.MAIN_FOLDER}/Categories/${brand.categoryId.folderId}/SubCategories/${brand.subCategoryId.folderId}/Brands/${brand.folderId}`)
 
-    
-
-    res.status(200).json({ success: true, message: 'Brand deleted successfully'})
+    res.status(200).json({ success: true, message: 'Brand deleted successfully' })
 }
 
+/**
+ * @name getAllBrands
+ * @query {page, size, sortBy , search, filters}
+ * @description get all brands with category and subcategory names and use pagination
+ */
 export const getAllBrands = async (req, res, next) => {
+    const { page, size, sortBy, ...search } = req.query
     // get all brands with category and subcategory names
-    const brands = await Brand.find().populate('categoryId', 'name').populate('subCategoryId', 'name')
+    const features = new APIFeatures(req.query, Brand.find()).pagination({ page, size }).sort(sortBy).searchBrand(search)
+    const brands = await features.mongooseQuery.populate('categoryId', 'name').populate('subCategoryId', 'name')
+    if (!brands) return next({ cause: 404, message: 'Brands not found' })
     res.status(200).json({ success: true, data: brands })
 }
+
+

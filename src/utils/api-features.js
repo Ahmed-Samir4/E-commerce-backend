@@ -31,7 +31,7 @@ export class APIFeatures {
     // mongooseQuery  = model.find()
     // query = req.query
     constructor(query, mongooseQuery) {
-        this.query = query // we can remove this variable becaue we didn't use it
+        this.query = query // we can remove this variable because we didn't use it
         this.mongooseQuery = mongooseQuery
     }
 
@@ -54,9 +54,25 @@ export class APIFeatures {
         return this
     }
 
-    search(search) {
+    searchBrand(search) {
         const queryFiler = {}
 
+        if (search.id) queryFiler._id = search.id
+        if (search.name) queryFiler.name = { $regex: search.name, $options: 'i' }
+        if (search.desc) queryFiler.desc = { $regex: search.desc, $options: 'i' }
+        if (search.categoryId) queryFiler.categoryId = search.categoryId
+        if (search.subCategoryId) queryFiler.subCategoryId = search.subCategoryId
+        if (search.addedBy) queryFiler.addedBy = search.addedBy
+        if (search.updatedBy) queryFiler.updatedBy = search.updatedBy
+
+        this.mongooseQuery = this.mongooseQuery.find(queryFiler)
+        return this
+    }
+    
+    searchProduct(search) {
+        const queryFiler = {}
+
+        if (search.id) queryFiler._id = search.id
         if (search.title) queryFiler.title = { $regex: search.title, $options: 'i' }
         if (search.desc) queryFiler.desc = { $regex: search.desc, $options: 'i' }
         if (search.discount) queryFiler.discount = { $ne: 0 }
@@ -68,8 +84,49 @@ export class APIFeatures {
         return this
     }
 
-    filters(filters) {
+    searchCoupon(search) {
+        const queryFiler = {}
 
+        if (search.id) queryFiler._id = search.id
+        if (search.couponCode) queryFiler.couponCode = { $regex: search.couponCode, $options: 'i' }
+        if (search.couponAmount) queryFiler.couponAmount = search.couponAmount
+        if (search.isFixed) queryFiler.isFixed = search.isFixed
+        if (search.isPercentage) queryFiler.isPercentage = search.isPercentage
+        if (search.fromDate) queryFiler.fromDate = { $gte: search.fromDate }
+        if (search.toDate) queryFiler.toDate = { $lte: search.toDate }
+        if (search.addedBy) queryFiler.addedBy = search.addedBy
+        if (search.updatedBy) queryFiler.updatedBy = search.updatedBy
+        if (search.disabledBy) queryFiler.disabledBy = search.disabledBy
+        if (search.enabledBy) queryFiler.enabledBy = search.enabledBy
+        if (search.disabledAt) queryFiler.disabledAt = search.disabledAt
+        if (search.enabledAt) queryFiler.enabledAt = search.enabledAt
+        if (search.enabled) {
+            queryFiler.couponStatus = "valid"
+        }
+        if (search.disabled) {
+            queryFiler.couponStatus = "expired"
+        }
+
+        this.mongooseQuery = this.mongooseQuery.find(queryFiler)
+        return this
+    }
+
+    searchSubCategory(search) {
+        const queryFiler = {}
+
+        if (search.id) queryFiler._id = search.id
+        if (search.title) queryFiler.title = { $regex: search.title, $options: 'i' }
+        if (search.desc) queryFiler.desc = { $regex: search.desc, $options: 'i' }
+        if (search.categoryId) queryFiler.categoryId = search.categoryId
+        if (search.addedBy) queryFiler.addedBy = search.addedBy
+        if (search.updatedBy) queryFiler.updatedBy = search.updatedBy
+
+
+        this.mongooseQuery = this.mongooseQuery.find(queryFiler)
+        return this
+    }
+
+    filters(filters) {
         /**
          * the filters will contian data like this
          * @params will be in this formate
@@ -78,18 +135,21 @@ export class APIFeatures {
             discount[ne]=0
             title[regex]=iphone
         */
-        const queryFilter = JSON.parse(
-            JSON.stringify(filters).replace(
-                /gt|gte|lt|lte|in|nin|eq|ne|regex/g,
-                (operator) => `$${operator}`,
-            ),
-        )
+        if (filters) {
+            const queryFilter = JSON.parse(
+                JSON.stringify(filters).replace(
+                    /gt|gte|lt|lte|in|nin|eq|ne|regex/g,
+                    (operator) => `$${operator}`,
+                ),
+            )
 
-        /**
-         * @object will be like this after the replace method
-         * { appliedPrice: { $gte: 100 }, stock: { $lte: 200 }, discount: { $ne: 0 }, title: { $regex: 'iphone' } 
-         */
-        this.mongooseQuery.find(queryFilter)
-        return this
+            /**
+             * @object will be like this after the replace method
+             * { appliedPrice: { $gte: 100 }, stock: { $lte: 200 }, discount: { $ne: 0 }, title: { $regex: 'iphone' } 
+             */
+            this.mongooseQuery.find(queryFilter)
+            return this
+        }
+
     }
 }

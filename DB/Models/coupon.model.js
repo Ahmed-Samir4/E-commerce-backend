@@ -42,6 +42,20 @@ const couponSchema = new mongoose.Schema({
     updatedBy:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
+    },
+    disabledBy:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    },
+    disabledAt:{
+        type: String
+    },
+    enabledBy:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    },
+    enabledAt:{
+        type: String
     }
 },{timestamps: true});
 

@@ -5,6 +5,8 @@ import generateUniqueString from "../../utils/generate-Unique-String.js"
 import cloudinaryConnection from "../../utils/cloudinary.js"
 import slugify from "slugify"
 import Brand from "../../../DB/Models/brand.model.js"
+import { APIFeatures } from "../../utils/api-features.js"
+import Product from "../../../DB/Models/product.model.js"
 
 /**
  * @name addSubCategory
@@ -122,19 +124,17 @@ export const updateSubCategory = async (req, res, next) => {
 /**
  * @name getSubCategory
  * @param {subCategoryId} - required
- * @description get the subCategory by using subCategoryId
+ * @description get the subCategory by using subCategoryId and populate the brands and the products after using pagination and sorting if exist
  */
 export const getAllSubCategories = async (req, res, next) => {
-    const subCategories = await SubCategory.find().populate(
-        [
-            {
-                path: 'Brands',
-                populate: {
-                    path: 'Products'
-                }
-            }
-        ]
-    )
+    const { page, size, sortBy} = req.query
+    const features = new APIFeatures(req.query, SubCategory.find()).pagination({ page, size }).sort(sortBy)
+    const subCategories = await features.mongooseQuery.populate([{
+        path: 'Brands',
+        populate:[{
+            path:'Products'
+        }]
+    }])
     if (!subCategories) return next({ cause: 404, message: 'SubCategories not found' })
     res.status(200).json({ success: true, message: 'SubCategories fetched successfully', data: subCategories })
 }
@@ -178,18 +178,17 @@ export const deleteSubCategory = async (req, res, next) => {
 /**
  * @name getSubCategory
  * @param {subCategoryId} - required
- * @description get subCategory by using subCategoryId
+ * @description get subCategory by using subCategoryId and populate the brands and the products 
  */
 export const getSubCategory = async (req, res, next) => {
     const { subCategoryId } = req.params
-
-    const subCategory = await SubCategory.findById(subCategoryId).populate({
-        path:'Brands',
+    const features = new APIFeatures(req.query, SubCategory.find()).searchSubCategory({ id: subCategoryId })
+    const subCategory = await features.mongooseQuery.populate([{
+        path: 'Brands',
         populate:[{
             path:'Products'
-        
         }]
-    })
+    }])
     if (!subCategory) return next({ cause: 404, message: 'SubCategory not found' })
 
     res.status(200).json({ success: true, message: 'SubCategory fetched successfully', data: subCategory })

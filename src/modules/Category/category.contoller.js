@@ -6,8 +6,7 @@ import Brand from '../../../DB/Models/brand.model.js'
 import cloudinaryConnection from '../../utils/cloudinary.js'
 import generateUniqueString from '../../utils/generate-Unique-String.js'
 import Product from '../../../DB/Models/product.model.js'
-import e from 'express'
-// import mongoose from 'mongoose'
+import { APIFeatures } from '../../utils/api-features.js'
 
 
 /** 
@@ -37,7 +36,7 @@ export const addCategory = async (req, res, next) => {
     const { secure_url, public_id } = await cloudinaryConnection().uploader.upload(req.file.path, {
         folder: `${process.env.MAIN_FOLDER}/Categories/${folderId}`
     })
-    
+
     req.folder = `${process.env.MAIN_FOLDER}/Categories/${folderId}`
 
     // 5- generate the categroy object
@@ -122,11 +121,13 @@ export const updateCategory = async (req, res, next) => {
 
 /**
  * @name getAllCategories
- * @description get all categories and the related subcategories, brands, products 
+ * @description get all categories and the related subcategories, brands, products and use pagination
  */
 export const getAllCategories = async (req, res, next) => {
+    const { page, size, sortBy } = req.query
     // nested populate
-    const categories = await Category.find().populate(
+    const features = new APIFeatures(req.query, Category.find()).pagination({ page, size }).sort(sortBy)
+    const categories = await features.mongooseQuery.populate(
         [
             {
                 path: 'subcategories',
@@ -186,11 +187,12 @@ export const deleteCategory = async (req, res, next) => {
 /**
  * @name getCategory
  * @param categoryId
- * @description get category by using categoryId
+ * @description get category by using categoryId and populate the subcategories, brands and products and use search
  */
 export const getCategory = async (req, res, next) => {
     const { categoryId } = req.params
-    const category = await Category.findById(categoryId).populate([{
+    const features = new APIFeatures(req.query, Category.findById(categoryId))
+    const category = await features.mongooseQuery.populate([{
         path: 'subcategories',
         populate: [{
             path: 'Brands',
@@ -210,7 +212,9 @@ export const getCategory = async (req, res, next) => {
  */
 export const getSubCategories = async (req, res, next) => {
     const { categoryId } = req.params
-    const subCategories = await Category.findById(categoryId).populate('subcategories')
+    // const subCategories = await Category.findById(categoryId).populate('subcategories')
+    const features = new APIFeatures(req.query, subCategory.find({ categoryId }))
+    const subCategories = await features.mongooseQuery
     if (!subCategories) return next({ cause: 404, message: 'Subcategories not found' })
     res.status(200).json({ success: true, message: 'Subcategories fetched successfully', data: subCategories })
 }

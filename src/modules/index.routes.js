@@ -9,7 +9,7 @@ import productRouter from  './Product/product.routes.js'
 import cartRouter from  './Cart/cart.routes.js'
 import couponRouter from  './Coupon/coupon.routes.js'
 import orderRouter from  './order/order.routes.js'
-
+import reviewRouter from  './Review/review.routes.js'
 
 export {
     userRouter,
@@ -20,18 +20,6 @@ export {
     productRouter,
     cartRouter,
     couponRouter,
-    orderRouter
+    orderRouter,
+    reviewRouter
 }
-
-/**
- * auth
- * user
- * category
- * subcategory
- * brand
- * product
- * coupon
- * cart
- * order
- * reviews
- */

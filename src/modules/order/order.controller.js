@@ -1,6 +1,5 @@
-
-
-//================================= add   order  ====================================
+import { nanoid } from "nanoid";
+import { DateTime } from "luxon";
 
 import { applyCouponValidation } from "../../utils/coupon-validation.js";
 import { checkProductAvailability } from "../Cart/utils/check-product-in-db.js";
@@ -9,12 +8,16 @@ import CouponUsers from "../../../DB/Models/coupon-users.model.js";
 import { getUserCart } from "../Cart/utils/get-user-cart.js";
 import Product from "../../../DB/Models/product.model.js";
 import Cart from "../../../DB/Models/cart.model.js";
-import { DateTime } from "luxon";
 import { qrCodeGeneration } from "../../utils/qr-code.js";
-import { nanoid } from "nanoid";
 import createInvoice from "../../utils/pdfkit.js";
 import sendEmailService from "../../services/send-email.service.js";
 import { createCheckoutSession, createPaymentIntent, createStripeCoupon, confirmPaymentIntent, refundPaymentIntent } from "../../payment-handler/stripe.js";
+
+/**
+ * @name createOrder
+ * @body {product, quantity, couponCode, paymentMethod, phoneNumbers, address, city, postalCode, country}
+ * @description this method will be used to create a new order after checking the product availability and the coupon code then set the prices and the order status and create the order then send the invoice to the user email
+ */
 export const createOrder = async (req, res, next) => {
     //destructure the request body
     const {
@@ -131,8 +134,11 @@ export const createOrder = async (req, res, next) => {
 
 }
 
-
-
+/**
+ * @name convertFromCartToOrder
+ * @body {couponCode, paymentMethod, phoneNumbers, address, city, postalCode, country}
+ * @description this method will be used to convert the user cart to an order after checking the product availability and the coupon code then set the prices and the order status and create the order then send the invoice to the user email
+ */
 export const convertFromCartToOrder = async (req, res, next) => {
     //destructure the request body
     const {
@@ -247,8 +253,11 @@ export const convertFromCartToOrder = async (req, res, next) => {
     res.status(201).json({ message: 'Order created successfully', order });
 }
 
-
-// ======================= order delivery =======================//
+/**
+ * @name deliverOrder
+ * @params {orderId}
+ * @description this method will be used to deliver the order after checking the order status and the user role then update the order status to delivered 
+ */
 export const deliverOrder = async (req, res, next) => {
     const { orderId } = req.params;
 
@@ -269,8 +278,11 @@ export const deliverOrder = async (req, res, next) => {
     res.status(200).json({ message: 'Order delivered successfully', order: updateOrder });
 }
 
-
-// ======================= order payment with stipe =======================//
+/**
+ * @name payWithStripe
+ * @params {orderId}
+ * @description this method will be used to pay the order with stripe after creating the payment intent and the checkout session then update the order status to paid
+ */
 export const payWithStripe = async (req, res, next) => {
     const {orderId}= req.params;
     const {_id:userId} = req.authUser;
@@ -315,8 +327,10 @@ export const payWithStripe = async (req, res, next) => {
     res.status(200).json({checkoutSession , paymentIntent});
 }
 
-
-//====================== apply webhook locally to confirm the  order =======================//
+/**
+ * @name stripeWebhookLocal
+ * @description this method will be used to handle the stripe webhook locally after confirming the payment intent and updating the order status to paid
+ */
 export const stripeWebhookLocal  =  async (req,res,next) => {
     const orderId = req.body.data.object.metadata.orderId
 
@@ -334,7 +348,11 @@ export const stripeWebhookLocal  =  async (req,res,next) => {
     res.status(200).json({message: 'webhook received'});
 }
 
-
+/**
+ * @name refundOrder
+ * @params {orderId}
+ * @description this method will be used to refund the order after checking the order status and the user role then update the order status to refunded and refund the payment intent
+ */
 export const refundOrder = async (req, res, next) => {
     const{orderId} = req.params; 
 
@@ -348,4 +366,31 @@ export const refundOrder = async (req, res, next) => {
     await findOrder.save();
 
     res.status(200).json({message: 'Order refunded successfully', order: refund});
+}
+
+/**
+ * @name cancelOrder
+ * @params {orderId}
+ * @description this method will be used to cancel the order withing 24 hours from the creation time
+ */
+
+export const cancelOrder = async (req, res, next) => {
+    const {orderId} = req.params;
+    const {_id:userId} = req.authUser;
+    // 1- check if the order is found and the user is the owner of the order
+    const order = await Order.findOne({_id: orderId, user: userId});
+    if(!order) return next({message: 'Order not found or cannot be cancelled', cause: 404});
+
+    // 2- check if status is cancelled or delivered or refunded
+    if(['Cancelled', 'Delivered', 'Refunded'].includes(order.orderStatus)) return next({message: 'Order cannot be cancelled', cause: 400});
+    // 3- check if the order is created before 24 hours
+    const orderCreationTime = DateTime.fromISO(order.createdAt);
+    const currentTime = DateTime.now();
+    const diff = currentTime.diff(orderCreationTime, 'hours').toObject();
+    if(diff.hours > 24) return next({message: 'Order cannot be cancelled', cause: 400});
+    // 4- update the order status to cancelled
+    order.orderStatus = 'Cancelled';
+    await order.save();
+
+    res.status(200).json({message: 'Order cancelled successfully', order});
 }
